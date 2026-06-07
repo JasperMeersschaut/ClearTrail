@@ -62,13 +62,68 @@ export function generateRoutes(body: {
   lat: number;
   lng: number;
   durationMinutes: number;
-  walkingSpeedKmh?: number;
+  paceMinPerKm?: number;
   loopRoutesOnly?: boolean;
   dryFeetEnabled?: boolean;
   shadePreferenceEnabled?: boolean;
   count?: number;
 }) {
   return api.post<GenerateRoutesResponse>('/routes/generate', body);
+}
+
+export function saveWalk(body: {
+  name: string;
+  lat: number;
+  lng: number;
+  route: {
+    distanceMeters: number;
+    estimatedDurationMin: number;
+    elevationGainM?: number;
+    surfaceBreakdown?: Record<string, number>;
+    scoringMetadata?: Record<string, unknown>;
+    geojson: {
+      type: 'Feature';
+      geometry: { type: 'LineString'; coordinates: [number, number][] };
+      properties?: Record<string, unknown>;
+    };
+  };
+}) {
+  return api.post<{ id: string; createdAt: string }>('/routes/save', body);
+}
+
+export function getSavedWalks() {
+  return api.get<
+    Array<{
+      id: string;
+      name: string;
+      distanceMeters: number;
+      estimatedDurationMin: number;
+      elevationGainM?: number;
+      geojson: {
+        type: 'Feature';
+        geometry: { type: 'LineString'; coordinates: [number, number][] };
+        properties?: Record<string, unknown>;
+      };
+      createdAt: string;
+    }>
+  >('/routes/saved/list');
+}
+
+export function logHike(body: {
+  savedRouteId?: string;
+  routeGeojson: {
+    type: 'Feature';
+    geometry: { type: 'LineString'; coordinates: [number, number][] };
+    properties?: Record<string, unknown>;
+  };
+  distanceMeters: number;
+  durationMinutes: number;
+  startedAt: string;
+  completedAt: string;
+  actualTrack?: Array<{ lat: number; lng: number; ts: string }>;
+  notes?: string;
+}) {
+  return api.post<{ id: string; createdAt: string }>('/hikes', body);
 }
 
 export function getGearRecommendation(lat: number, lng: number) {
@@ -90,6 +145,7 @@ export function getRecentHikes() {
       startedAt: string;
       completedAt: string;
       notes?: string;
+      actualTrack?: Array<{ lat: number; lng: number; ts: string }>;
     }>
   >('/hikes');
 }

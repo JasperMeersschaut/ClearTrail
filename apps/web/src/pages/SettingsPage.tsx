@@ -21,8 +21,8 @@ export function SettingsPage() {
   });
 
   const handleChange = (
-    field: 'distanceUnit' | 'timeFormat' | 'dateFormat',
-    value: string
+    field: 'distanceUnit' | 'timeFormat' | 'dateFormat' | 'paceMinPerKm',
+    value: string | number
   ) => {
     settings.setSettings({ [field]: value });
   };
@@ -33,6 +33,7 @@ export function SettingsPage() {
         distanceUnit: settings.distanceUnit,
         timeFormat: settings.timeFormat,
         dateFormat: settings.dateFormat,
+        paceMinPerKm: settings.paceMinPerKm,
       });
     } else {
       navigate('/');
@@ -87,6 +88,23 @@ export function SettingsPage() {
             <option value="MDY">MM/DD/YYYY</option>
             <option value="YMD">YYYY-MM-DD</option>
           </select>
+        </label>
+
+        <label className="field">
+          Walking pace (min/km)
+          <input
+            type="number"
+            min={5}
+            max={30}
+            step={0.5}
+            value={settings.paceMinPerKm}
+            onChange={(e) =>
+              handleChange('paceMinPerKm', parseFloat(e.target.value) || 12)
+            }
+          />
+          <span className="muted field-hint">
+            Used to estimate walk times. Default: 12 min/km.
+          </span>
         </label>
 
         <div className="settings-actions">

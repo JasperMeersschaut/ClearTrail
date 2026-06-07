@@ -1,5 +1,5 @@
 import type { GeneratedRoute } from '@cleartrail/shared';
-import { formatDistance } from '@cleartrail/shared';
+import { estimateDurationMinutes, formatDistance } from '@cleartrail/shared';
 import { useSettingsStore } from '../store/settingsStore';
 
 interface AlternativeRoutesProps {
@@ -14,6 +14,7 @@ export function AlternativeRoutesList({
   onSelect,
 }: AlternativeRoutesProps) {
   const distanceUnit = useSettingsStore((s) => s.distanceUnit);
+  const paceMinPerKm = useSettingsStore((s) => s.paceMinPerKm);
 
   if (routes.length === 0) return null;
 
@@ -36,7 +37,8 @@ export function AlternativeRoutesList({
                   style={{ backgroundColor: color }}
                 />
                 <span className="route-list-label">
-                  {route.name} • {formatDistance(route.distanceMeters, distanceUnit)} • {route.estimatedDurationMin} min
+                  {route.name} • {formatDistance(route.distanceMeters, distanceUnit)} •{' '}
+                  {estimateDurationMinutes(route.distanceMeters, paceMinPerKm)} min
                 </span>
                 {isSelected && (
                   <span className="route-selected-badge">Selected</span>

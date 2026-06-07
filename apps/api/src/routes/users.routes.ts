@@ -116,6 +116,7 @@ const settingsSchema = z.object({
   distanceUnit: z.enum(['km', 'mi']).optional(),
   timeFormat: z.enum(['24h', '12h']).optional(),
   dateFormat: z.enum(['DMY', 'MDY', 'YMD']).optional(),
+  paceMinPerKm: z.number().min(5).max(30).optional(),
 });
 
 router.put('/me/settings', requireAuth, async (req, res, next) => {

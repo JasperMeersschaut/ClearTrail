@@ -11,7 +11,7 @@ const generateSchema = z.object({
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
   durationMinutes: z.number().min(15).max(480),
-  walkingSpeedKmh: z.number().min(2).max(8).optional(),
+  paceMinPerKm: z.number().min(5).max(30).optional(),
   loopRoutesOnly: z.boolean().optional(),
   dryFeetEnabled: z.boolean().optional(),
   shadePreferenceEnabled: z.boolean().optional(),
@@ -33,6 +33,44 @@ router.post('/generate-single', async (req, res, next) => {
     const body = generateSchema.parse(req.body);
     const route = await generateCircularRoute(body);
     res.json(route);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/generate-single', async (req, res, next) => {
+  try {
+    const body = generateSchema.parse(req.body);
+    const route = await generateCircularRoute(body);
+    res.json(route);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/saved/list', requireAuth, async (req, res, next) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, name, distance_meters, estimated_duration_min,
+              elevation_gain_m, geojson, created_at
+       FROM saved_routes WHERE user_id = $1
+       ORDER BY created_at DESC`,
+      [req.user!.userId]
+    );
+
+    res.json(
+      result.rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        distanceMeters: parseFloat(row.distance_meters),
+        estimatedDurationMin: row.estimated_duration_min,
+        elevationGainM: row.elevation_gain_m
+          ? parseFloat(row.elevation_gain_m)
+          : undefined,
+        geojson: row.geojson,
+        createdAt: row.created_at,
+      }))
+    );
   } catch (error) {
     next(error);
   }

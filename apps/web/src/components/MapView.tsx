@@ -8,7 +8,7 @@ import {
   useMap,
 } from 'react-leaflet';
 import L from 'leaflet';
-import type { Feature, GeneratedRoute, LineString } from '@cleartrail/shared';
+import type { Feature, GeneratedRoute, GpsTrackPoint, LineString } from '@cleartrail/shared';
 import { ROUTE_COLORS } from '@cleartrail/shared';
 import 'leaflet/dist/leaflet.css';
 
@@ -38,6 +38,8 @@ interface MapViewProps {
   routes: GeneratedRoute[];
   selectedRouteIndex: number;
   onRouteSelect: (index: number) => void;
+  gpsTrack?: GpsTrackPoint[] | null;
+  plannedRoute?: Feature<LineString> | null;
 }
 
 function MapCenterUpdater({ center }: { center: { lat: number; lng: number } }) {
@@ -112,6 +114,8 @@ export function MapView({
   routes,
   selectedRouteIndex,
   onRouteSelect,
+  gpsTrack = null,
+  plannedRoute = null,
 }: MapViewProps) {
   const selectedRoute = routes[selectedRouteIndex];
   const selectedPositions = selectedRoute
@@ -131,6 +135,12 @@ export function MapView({
   const selectedRouteEntry = routes[selectedRouteIndex]
     ? { route: routes[selectedRouteIndex], index: selectedRouteIndex }
     : null;
+
+  const gpsPositions: [number, number][] =
+    gpsTrack?.map((p) => [p.lat, p.lng]) ?? [];
+  const ghostPositions = plannedRoute
+    ? geoJsonToLeafletPositions(plannedRoute)
+    : [];
 
   return (
     <MapContainer
@@ -180,6 +190,32 @@ export function MapView({
             fillColor: '#40916c',
             fillOpacity: 0.85,
             weight: 2,
+          }}
+        />
+      )}
+
+      {ghostPositions.length >= 2 && (
+        <Polyline
+          positions={ghostPositions}
+          pathOptions={{
+            color: '#74c69d',
+            weight: 3,
+            opacity: 0.45,
+            dashArray: '8 8',
+            lineCap: 'round',
+          }}
+        />
+      )}
+
+      {gpsPositions.length >= 2 && (
+        <Polyline
+          positions={gpsPositions}
+          pathOptions={{
+            color: '#2196f3',
+            weight: 5,
+            opacity: 0.9,
+            lineCap: 'round',
+            lineJoin: 'round',
           }}
         />
       )}

@@ -5,7 +5,7 @@ export interface GenerateRouteRequest {
   lat: number;
   lng: number;
   durationMinutes: number;
-  walkingSpeedKmh?: number;
+  paceMinPerKm?: number;
   loopRoutesOnly?: boolean;
   dryFeetEnabled?: boolean;
   shadePreferenceEnabled?: boolean;

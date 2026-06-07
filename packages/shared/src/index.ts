@@ -2,6 +2,7 @@ export * from './geo.js';
 export * from './weather.js';
 export * from './routes.js';
 export * from './settings.js';
+export * from './walk.js';
 
 export interface User {
   id: string;

@@ -1,0 +1,2 @@
+ALTER TABLE user_settings
+  ADD COLUMN IF NOT EXISTS pace_min_per_km NUMERIC(4,1) NOT NULL DEFAULT 12.0;

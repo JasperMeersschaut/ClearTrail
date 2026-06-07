@@ -517,3 +517,170 @@ ul {
   background: #f77f00;
 }
 
+.field-hint {
+  font-size: 0.85rem;
+  margin-top: 0.35rem;
+}
+
+.save-walk-btn {
+  margin-top: 0.75rem;
+  width: 100%;
+}
+
+.walk-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.walk-panel-active {
+  border-color: var(--color-accent);
+}
+
+.walk-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.walk-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+  background: var(--color-bg);
+  border-radius: var(--radius);
+}
+
+.walk-stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.walk-stat-label {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.walk-adjust-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.walk-adjust-label {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+.btn-adjust {
+  flex: 1;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--color-surface-light);
+  border-radius: 8px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.btn-adjust:hover {
+  background: var(--color-surface-light);
+}
+
+.walk-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.walk-hint {
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.walk-alert {
+  color: var(--color-error);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.walk-recovery-banner {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-surface);
+  border: 1px solid var(--color-accent);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.replay-banner {
+  border-color: #2196f3;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--color-accent);
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: inherit;
+  padding: 0;
+}
+
+.dashboard-subtitle {
+  margin: 0.25rem 0 0;
+  max-width: 36rem;
+}
+
+.dashboard-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.dashboard-tab {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-surface-light);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.dashboard-tab.active {
+  background: var(--color-surface-light);
+  border-color: var(--color-accent);
+}
+
+.hike-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.hike-meta {
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+}
+
+.btn-sm {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.saved-walks-list .hike-list-item {
+  padding: 0.5rem 0;
+}
+

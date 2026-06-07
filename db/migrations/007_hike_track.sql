@@ -1,0 +1,2 @@
+ALTER TABLE hike_logs
+  ADD COLUMN IF NOT EXISTS actual_track JSONB;

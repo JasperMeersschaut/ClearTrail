@@ -4,7 +4,7 @@ import { pool } from '../db/pool.js';
 
 export async function getUserSettings(userId: string): Promise<UserSettings> {
   const result = await pool.query(
-    `SELECT distance_unit, time_format, date_format
+    `SELECT distance_unit, time_format, date_format, pace_min_per_km
      FROM user_settings WHERE user_id = $1`,
     [userId]
   );
@@ -18,6 +18,7 @@ export async function getUserSettings(userId: string): Promise<UserSettings> {
     distanceUnit: row.distance_unit,
     timeFormat: row.time_format,
     dateFormat: row.date_format,
+    paceMinPerKm: parseFloat(row.pace_min_per_km ?? 12),
   };
 }
 
@@ -29,18 +30,20 @@ export async function updateUserSettings(
   const merged = { ...current, ...settings };
 
   await pool.query(
-    `INSERT INTO user_settings (user_id, distance_unit, time_format, date_format)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO user_settings (user_id, distance_unit, time_format, date_format, pace_min_per_km)
+     VALUES ($1, $2, $3, $4, $5)
      ON CONFLICT (user_id) DO UPDATE SET
        distance_unit = EXCLUDED.distance_unit,
        time_format = EXCLUDED.time_format,
        date_format = EXCLUDED.date_format,
+       pace_min_per_km = EXCLUDED.pace_min_per_km,
        updated_at = NOW()`,
     [
       userId,
       merged.distanceUnit,
       merged.timeFormat,
       merged.dateFormat,
+      merged.paceMinPerKm,
     ]
   );
 

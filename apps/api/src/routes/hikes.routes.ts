@@ -17,8 +17,17 @@ const hikeSchema = z.object({
   }),
   distanceMeters: z.number().positive(),
   durationMinutes: z.number().positive(),
-  startedAt: z.string().datetime(),
-  completedAt: z.string().datetime(),
+  startedAt: z.string(),
+  completedAt: z.string(),
+  actualTrack: z
+    .array(
+      z.object({
+        lat: z.number(),
+        lng: z.number(),
+        ts: z.string(),
+      })
+    )
+    .optional(),
   weatherConditions: z.record(z.unknown()).optional(),
   notes: z.string().optional(),
 });
@@ -30,11 +39,12 @@ router.post('/', requireAuth, async (req, res, next) => {
     const result = await pool.query(
       `INSERT INTO hike_logs (
          user_id, saved_route_id, route_geometry, distance_meters,
-         duration_minutes, started_at, completed_at, weather_conditions, notes
+         duration_minutes, started_at, completed_at, weather_conditions,
+         notes, actual_track
        ) VALUES (
          $1, $2,
          ST_GeogFromText(ST_AsText(ST_GeomFromGeoJSON($3)::geography)),
-         $4, $5, $6, $7, $8, $9
+         $4, $5, $6, $7, $8, $9, $10
        ) RETURNING id, created_at`,
       [
         req.user!.userId,
@@ -46,6 +56,7 @@ router.post('/', requireAuth, async (req, res, next) => {
         body.completedAt,
         body.weatherConditions ? JSON.stringify(body.weatherConditions) : null,
         body.notes ?? null,
+        body.actualTrack ? JSON.stringify(body.actualTrack) : null,
       ]
     );
 
@@ -61,7 +72,8 @@ router.post('/', requireAuth, async (req, res, next) => {
 router.get('/', requireAuth, async (req, res, next) => {
   try {
     const result = await pool.query(
-      `SELECT id, distance_meters, duration_minutes, started_at, completed_at, notes, created_at
+      `SELECT id, distance_meters, duration_minutes, started_at, completed_at,
+              notes, actual_track, created_at
        FROM hike_logs WHERE user_id = $1
        ORDER BY completed_at DESC LIMIT 20`,
       [req.user!.userId]
@@ -75,6 +87,7 @@ router.get('/', requireAuth, async (req, res, next) => {
         startedAt: row.started_at,
         completedAt: row.completed_at,
         notes: row.notes,
+        actualTrack: row.actual_track ?? undefined,
         createdAt: row.created_at,
       }))
     );

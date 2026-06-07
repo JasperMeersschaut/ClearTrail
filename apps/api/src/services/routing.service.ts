@@ -9,7 +9,8 @@ import type {
 import {
   ROUTE_COLORS,
   destinationPoint,
-  durationToDistanceMeters,
+  estimateDurationMinutes,
+  targetDistanceFromDuration,
 } from '@cleartrail/shared';
 import { env } from '../config/env.js';
 import { getRecentPrecipitation } from './weather.service.js';
@@ -64,7 +65,7 @@ function buildRoute(
     index: number;
     isLoop: boolean;
     targetDistanceM: number;
-    durationMinutes: number;
+    paceMinPerKm: number;
   }
 ): GeneratedRoute {
   const coords = opts.isLoop
@@ -78,7 +79,10 @@ function buildRoute(
   return {
     name: routeName(opts.index, opts.isLoop),
     distanceMeters,
-    estimatedDurationMin: opts.durationMinutes,
+    estimatedDurationMin: estimateDurationMinutes(
+      distanceMeters,
+      opts.paceMinPerKm
+    ),
     surfaceBreakdown: {},
     scoringMetadata: {},
     geojson: {
@@ -95,7 +99,7 @@ function mockLoopRoute(
   lat: number,
   lng: number,
   targetDistanceM: number,
-  durationMinutes: number,
+  paceMinPerKm: number,
   index: number
 ): GeneratedRoute {
   const radiusDeg = targetDistanceM / 4 / 111_320;
@@ -116,7 +120,7 @@ function mockLoopRoute(
       geometry: { type: 'LineString', coordinates: closeLoopCoordinates(points) },
       properties: { mock: true },
     },
-    { index, isLoop: true, targetDistanceM, durationMinutes }
+    { index, isLoop: true, targetDistanceM, paceMinPerKm }
   );
 }
 
@@ -124,7 +128,7 @@ function mockOneWayRoute(
   lat: number,
   lng: number,
   targetDistanceM: number,
-  durationMinutes: number,
+  paceMinPerKm: number,
   index: number
 ): GeneratedRoute {
   const bearing = variantBearing(index);
@@ -144,7 +148,7 @@ function mockOneWayRoute(
       geometry: { type: 'LineString', coordinates: points },
       properties: { mock: true },
     },
-    { index, isLoop: false, targetDistanceM, durationMinutes }
+    { index, isLoop: false, targetDistanceM, paceMinPerKm }
   );
 }
 
@@ -152,7 +156,7 @@ async function fetchOrsRoundTrip(
   lat: number,
   lng: number,
   targetDistanceM: number,
-  durationMinutes: number,
+  paceMinPerKm: number,
   index: number
 ): Promise<GeneratedRoute | null> {
   const seed = variantSeed(index);
@@ -185,7 +189,7 @@ async function fetchOrsRoundTrip(
       index,
       isLoop: true,
       targetDistanceM,
-      durationMinutes,
+      paceMinPerKm,
     });
   } catch {
     return null;
@@ -196,7 +200,7 @@ async function fetchOrsOneWay(
   lat: number,
   lng: number,
   targetDistanceM: number,
-  durationMinutes: number,
+  paceMinPerKm: number,
   index: number
 ): Promise<GeneratedRoute | null> {
   const bearing = variantBearing(index);
@@ -227,7 +231,7 @@ async function fetchOrsOneWay(
       index,
       isLoop: false,
       targetDistanceM,
-      durationMinutes,
+      paceMinPerKm,
     });
   } catch {
     return null;
@@ -239,7 +243,8 @@ async function generateSingleRoute(
   index: number,
   targetDistanceM: number,
   recentRainMm: number,
-  loopRoutesOnly: boolean
+  loopRoutesOnly: boolean,
+  paceMinPerKm: number
 ): Promise<GeneratedRoute> {
   let route: GeneratedRoute;
 
@@ -249,14 +254,14 @@ async function generateSingleRoute(
           request.lat,
           request.lng,
           targetDistanceM,
-          request.durationMinutes,
+          paceMinPerKm,
           index
         )
       : mockOneWayRoute(
           request.lat,
           request.lng,
           targetDistanceM,
-          request.durationMinutes,
+          paceMinPerKm,
           index
         );
   } else if (loopRoutesOnly) {
@@ -265,14 +270,14 @@ async function generateSingleRoute(
         request.lat,
         request.lng,
         targetDistanceM,
-        request.durationMinutes,
+        paceMinPerKm,
         index
       )) ??
       mockLoopRoute(
         request.lat,
         request.lng,
         targetDistanceM,
-        request.durationMinutes,
+        paceMinPerKm,
         index
       );
   } else {
@@ -281,14 +286,14 @@ async function generateSingleRoute(
         request.lat,
         request.lng,
         targetDistanceM,
-        request.durationMinutes,
+        paceMinPerKm,
         index
       )) ??
       mockOneWayRoute(
         request.lat,
         request.lng,
         targetDistanceM,
-        request.durationMinutes,
+        paceMinPerKm,
         index
       );
   }
@@ -313,10 +318,10 @@ export async function generateMultipleRoutes(
   request: GenerateRouteRequest
 ): Promise<GenerateRoutesResponse> {
   const loopRoutesOnly = request.loopRoutesOnly ?? true;
-  const walkingSpeedKmh = request.walkingSpeedKmh ?? 4.5;
-  const targetDistanceM = durationToDistanceMeters(
+  const paceMinPerKm = request.paceMinPerKm ?? 12;
+  const targetDistanceM = targetDistanceFromDuration(
     request.durationMinutes,
-    walkingSpeedKmh
+    paceMinPerKm
   );
 
   const recentRain = request.dryFeetEnabled
@@ -335,7 +340,8 @@ export async function generateMultipleRoutes(
         index,
         targetDistanceM,
         recentRain.cumulativeRainMm,
-        loopRoutesOnly
+        loopRoutesOnly,
+        paceMinPerKm
       )
     )
   );
