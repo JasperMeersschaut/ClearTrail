@@ -1,10 +1,8 @@
 import { useEffect } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { generateRoutes, getGearRecommendation, getOptimalWindow } from '../api';
+import { useMutation } from '@tanstack/react-query';
+import { generateRoutes } from '../api';
 import { MapView } from '../components/MapView';
-import { WeatherWindow } from '../components/WeatherWindow';
 import { RoutePanel } from '../components/RoutePanel';
-import { GearCard } from '../components/GearCard';
 import { AlternativeRoutesList } from '../components/AlternativeRoutesList';
 import { WalkModePanel } from '../components/WalkModePanel';
 import { useGeolocation } from '../hooks/useGeolocation';
@@ -14,7 +12,7 @@ import { useWalkSessionStore } from '../store/walkSessionStore';
 
 export function HomePage() {
   const paceMinPerKm = useSettingsStore((s) => s.paceMinPerKm);
-  const { location, error: geoError, loading: geoLoading } = useGeolocation();
+  const { location, error: geoError } = useGeolocation();
   const walkStatus = useWalkSessionStore((s) => s.status);
   const gpsTrack = useWalkSessionStore((s) => s.gpsTrack);
   const plannedRoute = useWalkSessionStore((s) => s.plannedRoute);
@@ -31,16 +29,12 @@ export function HomePage() {
     loopRoutesOnly,
     dryFeetEnabled,
     shadePreferenceEnabled,
-    searchStartTime,
-    searchEndTime,
     routes,
     selectedRouteIndex,
     setDurationMinutes,
     setLoopRoutesOnly,
     setDryFeetEnabled,
     setShadePreferenceEnabled,
-    setSearchStartTime,
-    setSearchEndTime,
     setRoutes,
     setSelectedRouteIndex,
     setUserLocation,
@@ -80,23 +74,6 @@ export function HomePage() {
   const lng = location?.lng ?? 4.3517;
   const isWalking = walkStatus === 'active' || walkStatus === 'paused';
 
-  const findWindowMutation = useMutation({
-    mutationFn: () =>
-      getOptimalWindow({
-        lat,
-        lng,
-        searchStartTime,
-        searchEndTime,
-        windowDurationMinutes: durationMinutes,
-      }),
-  });
-
-  const gearQuery = useQuery({
-    queryKey: ['gear', lat, lng],
-    queryFn: () => getGearRecommendation(lat, lng),
-    enabled: !geoLoading,
-  });
-
   const generateMutation = useMutation({
     mutationFn: () =>
       generateRoutes({
@@ -111,7 +88,6 @@ export function HomePage() {
       }),
     onSuccess: (result) => {
       setRoutes(result.routes, result.selectedIndex);
-      findWindowMutation.mutate();
     },
   });
 
@@ -158,6 +134,7 @@ export function HomePage() {
 
         {!isWalking && (
           <>
+            {/* Weather-related features are temporarily disabled.
             <WeatherWindow
               window={findWindowMutation.data}
               loading={findWindowMutation.isPending}
@@ -168,6 +145,7 @@ export function HomePage() {
               onFindBestWindow={() => findWindowMutation.mutate()}
               finding={findWindowMutation.isPending}
             />
+            */}
             <RoutePanel
               durationMinutes={durationMinutes}
               onDurationChange={setDurationMinutes}
@@ -184,7 +162,9 @@ export function HomePage() {
               lat={lat}
               lng={lng}
             />
+            {/* Gear advisor temporarily disabled.
             <GearCard gear={gearQuery.data} loading={gearQuery.isLoading} />
+            */}
             <AlternativeRoutesList
               routes={routes}
               selectedRouteIndex={selectedRouteIndex}
