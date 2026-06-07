@@ -1,0 +1,19 @@
+{
+  "name": "cleartrail",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Weather-optimized hiking route planner",
+  "scripts": {
+    "dev": "pnpm run --parallel dev",
+    "dev:api": "pnpm --filter @cleartrail/api dev",
+    "dev:web": "pnpm --filter @cleartrail/web dev",
+    "build": "pnpm run -r build",
+    "migrate": "pnpm --filter @cleartrail/api migrate",
+    "typecheck": "pnpm run -r typecheck"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@10.30.3+sha512.c961d1e0a2d8e354ecaa5166b822516668b7f44cb5bd95122d590dd81922f606f5473b6d23ec4a5be05e7fcd18e8488d47d978bbe981872f1145d06e9a740017"
+}
