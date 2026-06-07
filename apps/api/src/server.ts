@@ -3,14 +3,16 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
+import type { RequestHandler } from 'express';
 import { env } from './config/env.js';
 import { pool } from './db/pool.js';
 import routes from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
+const securityHeaders = helmet as unknown as () => RequestHandler;
 
-app.use(helmet());
+app.use(securityHeaders());
 app.use(compression());
 app.use(
   cors({
