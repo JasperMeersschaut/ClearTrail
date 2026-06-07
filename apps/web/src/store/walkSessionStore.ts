@@ -17,6 +17,12 @@ interface WalkSessionState extends WalkSession {
   queueSavedWalkStart: (pending: PendingSavedWalkStart) => void;
   clearPendingSavedWalkStart: () => void;
   setReplayTrack: (track: GpsTrackPoint[] | null) => void;
+  updateWalkPlan: (plan: {
+    budgetMinutes: number;
+    budgetMeters: number;
+    plannedRoute: Feature<LineString> | null;
+    plannedRouteName?: string | null;
+  }) => void;
   startWalk: (opts: {
     startLat: number;
     startLng: number;
@@ -48,6 +54,15 @@ export const useWalkSessionStore = create<WalkSessionState>()(
       queueSavedWalkStart: (pending) => set({ pendingSavedWalkStart: pending }),
       clearPendingSavedWalkStart: () => set({ pendingSavedWalkStart: null }),
       setReplayTrack: (track) => set({ replayTrack: track }),
+
+      updateWalkPlan: (plan) =>
+        set((state) => ({
+          ...state,
+          budgetMinutes: plan.budgetMinutes,
+          budgetMeters: plan.budgetMeters,
+          plannedRoute: plan.plannedRoute,
+          plannedRouteName: plan.plannedRouteName ?? state.plannedRouteName,
+        })),
 
       startWalk: ({
         startLat,

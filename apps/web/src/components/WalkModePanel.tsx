@@ -1,14 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { GeneratedRoute } from '@cleartrail/shared';
 import {
+  buildRouteDirections,
+  formatDistance,
   estimateDurationMinutes,
   metersToDisplayUnit,
   targetDistanceFromDuration,
 } from '@cleartrail/shared';
-import { logHike } from '../api';
+import { generateRoutes, logHike } from '../api';
 import { useAuth } from '../hooks/useAuth';
 import { useWalkTracker, useWalkTimer } from '../hooks/useWalkTracker';
+import { useRouteStore } from '../store/routeStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { useWalkSessionStore } from '../store/walkSessionStore';
 
@@ -35,6 +38,9 @@ export function WalkModePanel({
 }: WalkModePanelProps) {
   const { isLoggedIn } = useAuth();
   const queryClient = useQueryClient();
+  const loopRoutesOnly = useRouteStore((s) => s.loopRoutesOnly);
+  const dryFeetEnabled = useRouteStore((s) => s.dryFeetEnabled);
+  const shadePreferenceEnabled = useRouteStore((s) => s.shadePreferenceEnabled);
   const distanceUnit = useSettingsStore((s) => s.distanceUnit);
   const paceMinPerKm = useSettingsStore((s) => s.paceMinPerKm);
   const unitLabel = distanceUnit === 'mi' ? 'mi' : 'km';
@@ -45,17 +51,19 @@ export function WalkModePanel({
   const budgetMeters = useWalkSessionStore((s) => s.budgetMeters);
   const headHomeRequested = useWalkSessionStore((s) => s.headHomeRequested);
   const plannedRouteName = useWalkSessionStore((s) => s.plannedRouteName);
+  const plannedRoute = useWalkSessionStore((s) => s.plannedRoute);
   const startWalk = useWalkSessionStore((s) => s.startWalk);
   const pauseWalk = useWalkSessionStore((s) => s.pauseWalk);
   const resumeWalk = useWalkSessionStore((s) => s.resumeWalk);
   const adjustBudgetMinutes = useWalkSessionStore((s) => s.adjustBudgetMinutes);
-  const adjustBudgetMeters = useWalkSessionStore((s) => s.adjustBudgetMeters);
+  const updateWalkPlan = useWalkSessionStore((s) => s.updateWalkPlan);
   const requestHeadHome = useWalkSessionStore((s) => s.requestHeadHome);
   const finishWalk = useWalkSessionStore((s) => s.finishWalk);
   const getElapsedSeconds = useWalkSessionStore((s) => s.getElapsedSeconds);
   const gpsTrack = useWalkSessionStore((s) => s.gpsTrack);
 
   const elapsedSeconds = useWalkTimer();
+  const currentPosition = gpsTrack[gpsTrack.length - 1] ?? { lat, lng };
   const [, tick] = useState(0);
   useEffect(() => {
     if (status !== 'active' && status !== 'paused') return;
@@ -93,10 +101,31 @@ export function WalkModePanel({
     },
   });
 
+  const replanMutation = useMutation({
+    mutationFn: async (nextRemainingMinutes: number) => {
+      if (!plannedRoute || nextRemainingMinutes <= 0) return null;
+
+      const response = await generateRoutes({
+        lat: currentPosition.lat,
+        lng: currentPosition.lng,
+        durationMinutes: nextRemainingMinutes,
+        paceMinPerKm,
+        loopRoutesOnly: plannedRoute.properties?.isLoop !== false ? loopRoutesOnly : false,
+        dryFeetEnabled,
+        shadePreferenceEnabled,
+        count: 1,
+      });
+
+      return response.routes[response.selectedIndex] ?? response.routes[0] ?? null;
+    },
+  });
+
   const remainingMinutes = Math.max(0, budgetMinutes - Math.floor(elapsedSeconds / 60));
   const remainingMeters = Math.max(0, budgetMeters - walkedMeters);
-  const distanceDelta =
-    distanceUnit === 'mi' ? 1609.344 : 1000;
+  const routeDirections = useMemo(() => {
+    if (!plannedRoute) return [];
+    return buildRouteDirections(plannedRoute.geometry.coordinates, currentPosition);
+  }, [plannedRoute, currentPosition.lat, currentPosition.lng]);
 
   function handleStart(planned: boolean) {
     const budgetMin = planned
@@ -154,6 +183,54 @@ export function WalkModePanel({
         completedAt,
         actualTrack: session.gpsTrack,
         notes: session.plannedRouteName ?? undefined,
+      });
+    }
+  }
+
+  async function handleAdjustMinutes(deltaMinutes: number) {
+    const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+    const nextRemainingMinutes = Math.max(0, remainingMinutes + deltaMinutes);
+
+    adjustBudgetMinutes(deltaMinutes);
+
+    if (!plannedRoute) return;
+
+    if (nextRemainingMinutes <= 0) {
+      updateWalkPlan({
+        budgetMinutes: elapsedMinutes,
+        budgetMeters: walkedMeters,
+        plannedRoute: null,
+        plannedRouteName,
+      });
+      return;
+    }
+
+    if (nextRemainingMinutes < 15) {
+      updateWalkPlan({
+        budgetMinutes: elapsedMinutes + nextRemainingMinutes,
+        budgetMeters,
+        plannedRoute,
+        plannedRouteName,
+      });
+      return;
+    }
+
+    try {
+      const nextRoute = await replanMutation.mutateAsync(nextRemainingMinutes);
+      if (!nextRoute) return;
+
+      updateWalkPlan({
+        budgetMinutes: elapsedMinutes + nextRemainingMinutes,
+        budgetMeters: walkedMeters + nextRoute.distanceMeters,
+        plannedRoute: nextRoute.geojson,
+        plannedRouteName: nextRoute.name,
+      });
+    } catch {
+      updateWalkPlan({
+        budgetMinutes: elapsedMinutes + nextRemainingMinutes,
+        budgetMeters: walkedMeters + targetDistanceFromDuration(nextRemainingMinutes, paceMinPerKm),
+        plannedRoute,
+        plannedRouteName,
       });
     }
   }
@@ -224,31 +301,32 @@ export function WalkModePanel({
 
       <div className="walk-adjust-row">
         <span className="walk-adjust-label">Time</span>
-        <button type="button" className="btn-adjust" onClick={() => adjustBudgetMinutes(-15)}>
+        <button type="button" className="btn-adjust" onClick={() => handleAdjustMinutes(-15)}>
           −15m
         </button>
-        <button type="button" className="btn-adjust" onClick={() => adjustBudgetMinutes(15)}>
+        <button type="button" className="btn-adjust" onClick={() => handleAdjustMinutes(15)}>
           +15m
         </button>
       </div>
 
-      <div className="walk-adjust-row">
-        <span className="walk-adjust-label">Distance</span>
-        <button
-          type="button"
-          className="btn-adjust"
-          onClick={() => adjustBudgetMeters(-distanceDelta)}
-        >
-          −1 {unitLabel}
-        </button>
-        <button
-          type="button"
-          className="btn-adjust"
-          onClick={() => adjustBudgetMeters(distanceDelta)}
-        >
-          +1 {unitLabel}
-        </button>
-      </div>
+      {routeDirections.length > 0 && (
+        <div className="walk-directions card-inset">
+          <h3>Directions</h3>
+          <p className="muted walk-hint">
+            Rebased from your latest GPS point so the remaining route grows from where you are now.
+          </p>
+          <ol className="direction-list">
+            {routeDirections.map((step, index) => (
+              <li key={`${step.instruction}-${index}`} className="direction-step">
+                <span className="direction-step-title">{step.instruction}</span>
+                <span className="direction-step-meta">
+                  {formatDistance(step.distanceMeters, distanceUnit)} · {step.direction}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
 
       <div className="walk-actions">
         {status === 'paused' ? (
