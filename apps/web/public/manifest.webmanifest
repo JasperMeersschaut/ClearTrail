@@ -1,0 +1,17 @@
+{
+  "name": "ClearTrail",
+  "short_name": "ClearTrail",
+  "description": "Weather-optimized hiking route planner",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1b4332",
+  "theme_color": "#2d6a4f",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
