@@ -1,24 +1,38 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { metersToDisplayUnit } from '@cleartrail/shared';
 import { getRecentHikes, getUserStats } from '../api';
+import { useAuth } from '../hooks/useAuth';
+import { useSettingsStore } from '../store/settingsStore';
 
 export function DashboardPage() {
+  const { isLoggedIn, isLoading: authLoading } = useAuth();
+  const distanceUnit = useSettingsStore((s) => s.distanceUnit);
+  const unitLabel = distanceUnit === 'mi' ? 'mi' : 'km';
+
   const statsQuery = useQuery({
     queryKey: ['stats'],
     queryFn: getUserStats,
     retry: false,
+    enabled: isLoggedIn,
   });
 
   const hikesQuery = useQuery({
     queryKey: ['hikes'],
     queryFn: getRecentHikes,
     retry: false,
+    enabled: isLoggedIn,
   });
 
-  const notAuthenticated =
-    statsQuery.error || hikesQuery.error;
+  if (authLoading) {
+    return (
+      <div className="dashboard-page">
+        <p className="muted">Loading...</p>
+      </div>
+    );
+  }
 
-  if (notAuthenticated) {
+  if (!isLoggedIn) {
     return (
       <div className="dashboard-page">
         <div className="card">
@@ -33,6 +47,9 @@ export function DashboardPage() {
   }
 
   const stats = statsQuery.data;
+  const totalDistance = stats
+    ? metersToDisplayUnit(stats.totalKmWalked * 1000, distanceUnit)
+    : null;
 
   return (
     <div className="dashboard-page">
@@ -44,9 +61,9 @@ export function DashboardPage() {
       <div className="stats-grid">
         <div className="card stat-card">
           <span className="stat-value">
-            {stats?.totalKmWalked.toFixed(1) ?? '—'}
+            {totalDistance?.toFixed(1) ?? '—'}
           </span>
-          <span className="stat-label">Total km walked</span>
+          <span className="stat-label">Total {unitLabel} walked</span>
         </div>
         <div className="card stat-card">
           <span className="stat-value">
@@ -69,8 +86,11 @@ export function DashboardPage() {
         <ul className="hike-list">
           {hikesQuery.data?.map((hike) => (
             <li key={hike.id}>
-              <strong>{(hike.distanceMeters / 1000).toFixed(1)} km</strong> ·{' '}
-              {hike.durationMinutes} min ·{' '}
+              <strong>
+                {metersToDisplayUnit(hike.distanceMeters, distanceUnit).toFixed(1)}{' '}
+                {unitLabel}
+              </strong>{' '}
+              · {hike.durationMinutes} min ·{' '}
               {new Date(hike.completedAt).toLocaleDateString()}
             </li>
           ))}

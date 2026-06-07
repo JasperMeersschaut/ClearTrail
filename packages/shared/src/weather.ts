@@ -15,10 +15,21 @@ export interface OptimalWeatherWindow {
   forecast: WeatherForecastHour[];
 }
 
+export interface WeatherWindowSearch {
+  lat: number;
+  lng: number;
+  searchStartTime: string;
+  searchEndTime: string;
+  windowDurationMinutes?: number;
+}
+
 export interface WeatherWindowRequest {
   lat: number;
   lng: number;
   hoursAhead?: number;
+  searchStartTime?: string;
+  searchEndTime?: string;
+  windowDurationMinutes?: number;
 }
 
 export interface HistoricalWeather {

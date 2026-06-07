@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { generateRoute, getGearRecommendation, getOptimalWindow } from '../api';
+import { generateRoutes, getGearRecommendation, getOptimalWindow } from '../api';
 import { MapView } from '../components/MapView';
 import { WeatherWindow } from '../components/WeatherWindow';
 import { RoutePanel } from '../components/RoutePanel';
 import { GearCard } from '../components/GearCard';
+import { AlternativeRoutesList } from '../components/AlternativeRoutesList';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { useRouteStore } from '../store/routeStore';
 
@@ -13,15 +13,27 @@ export function HomePage() {
   const { location, error: geoError, loading: geoLoading } = useGeolocation();
   const {
     durationMinutes,
+    loopRoutesOnly,
     dryFeetEnabled,
     shadePreferenceEnabled,
-    activeRoute,
+    searchStartTime,
+    searchEndTime,
+    routes,
+    selectedRouteIndex,
     setDurationMinutes,
+    setLoopRoutesOnly,
     setDryFeetEnabled,
     setShadePreferenceEnabled,
-    setActiveRoute,
+    setSearchStartTime,
+    setSearchEndTime,
+    setRoutes,
+    setSelectedRouteIndex,
     setUserLocation,
   } = useRouteStore();
+
+  const activeRoute = useRouteStore(
+    (s) => s.routes[s.selectedRouteIndex] ?? null
+  );
 
   useEffect(() => {
     if (location) {
@@ -32,10 +44,15 @@ export function HomePage() {
   const lat = location?.lat ?? 50.8503;
   const lng = location?.lng ?? 4.3517;
 
-  const weatherQuery = useQuery({
-    queryKey: ['weather', lat, lng],
-    queryFn: () => getOptimalWindow(lat, lng),
-    enabled: !geoLoading,
+  const findWindowMutation = useMutation({
+    mutationFn: () =>
+      getOptimalWindow({
+        lat,
+        lng,
+        searchStartTime,
+        searchEndTime,
+        windowDurationMinutes: durationMinutes,
+      }),
   });
 
   const gearQuery = useQuery({
@@ -46,31 +63,49 @@ export function HomePage() {
 
   const generateMutation = useMutation({
     mutationFn: () =>
-      generateRoute({
+      generateRoutes({
         lat,
         lng,
         durationMinutes,
+        loopRoutesOnly,
         dryFeetEnabled,
         shadePreferenceEnabled,
+        count: 5,
       }),
-    onSuccess: (route) => setActiveRoute(route),
+    onSuccess: (result) => {
+      setRoutes(result.routes, result.selectedIndex);
+      findWindowMutation.mutate();
+    },
   });
 
   return (
     <div className="home-layout">
       <div className="map-section">
-        <MapView center={{ lat, lng }} route={activeRoute?.geojson ?? null} />
+        <MapView
+          center={{ lat, lng }}
+          routes={routes}
+          selectedRouteIndex={selectedRouteIndex}
+          onRouteSelect={setSelectedRouteIndex}
+        />
         {geoError && <p className="geo-warning">{geoError}</p>}
       </div>
 
       <aside className="sidebar">
         <WeatherWindow
-          window={weatherQuery.data}
-          loading={weatherQuery.isLoading}
+          window={findWindowMutation.data}
+          loading={findWindowMutation.isPending}
+          searchStartTime={searchStartTime}
+          searchEndTime={searchEndTime}
+          onSearchStartChange={setSearchStartTime}
+          onSearchEndChange={setSearchEndTime}
+          onFindBestWindow={() => findWindowMutation.mutate()}
+          finding={findWindowMutation.isPending}
         />
         <RoutePanel
           durationMinutes={durationMinutes}
           onDurationChange={setDurationMinutes}
+          loopRoutesOnly={loopRoutesOnly}
+          onLoopRoutesChange={setLoopRoutesOnly}
           dryFeetEnabled={dryFeetEnabled}
           onDryFeetChange={setDryFeetEnabled}
           shadeEnabled={shadePreferenceEnabled}
@@ -78,12 +113,14 @@ export function HomePage() {
           onGenerate={() => generateMutation.mutate()}
           generating={generateMutation.isPending}
           route={activeRoute}
+          selectedRouteIndex={selectedRouteIndex}
         />
         <GearCard gear={gearQuery.data} loading={gearQuery.isLoading} />
-        <p className="auth-links">
-          <Link to="/dashboard">Dashboard</Link> ·{' '}
-          <Link to="/login">Login</Link>
-        </p>
+        <AlternativeRoutesList
+          routes={routes}
+          selectedRouteIndex={selectedRouteIndex}
+          onSelect={setSelectedRouteIndex}
+        />
       </aside>
     </div>
   );

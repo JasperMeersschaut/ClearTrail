@@ -3,6 +3,11 @@ import { z } from 'zod';
 import { pool } from '../db/pool.js';
 import { requireAuth } from '../middleware/auth.js';
 import { getUserStats } from '../services/stats.service.js';
+import {
+  getUserSettings,
+  updateUserSettings,
+} from '../services/settings.service.js';
+import { formatDistance, formatDateTime } from '@cleartrail/shared';
 const router: RouterType = Router();
 
 router.get('/me/stats', requireAuth, async (req, res, next) => {
@@ -93,6 +98,53 @@ router.put('/me/preferences', requireAuth, async (req, res, next) => {
     );
 
     res.json({ ok: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/me/settings', requireAuth, async (req, res, next) => {
+  try {
+    const settings = await getUserSettings(req.user!.userId);
+    res.json(settings);
+  } catch (error) {
+    next(error);
+  }
+});
+
+const settingsSchema = z.object({
+  distanceUnit: z.enum(['km', 'mi']).optional(),
+  timeFormat: z.enum(['24h', '12h']).optional(),
+  dateFormat: z.enum(['DMY', 'MDY', 'YMD']).optional(),
+});
+
+router.put('/me/settings', requireAuth, async (req, res, next) => {
+  try {
+    const body = settingsSchema.parse(req.body);
+    const settings = await updateUserSettings(req.user!.userId, body);
+    res.json(settings);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/format/preview', async (req, res, next) => {
+  try {
+    const schema = z.object({
+      distanceMeters: z.number(),
+      isoDateTime: z.string(),
+      settings: settingsSchema,
+    });
+    const body = schema.parse(req.body);
+    const settings = {
+      distanceUnit: body.settings.distanceUnit ?? 'km',
+      timeFormat: body.settings.timeFormat ?? '24h',
+      dateFormat: body.settings.dateFormat ?? 'DMY',
+    } as const;
+    res.json({
+      distance: formatDistance(body.distanceMeters, settings.distanceUnit),
+      dateTime: formatDateTime(body.isoDateTime, settings),
+    });
   } catch (error) {
     next(error);
   }

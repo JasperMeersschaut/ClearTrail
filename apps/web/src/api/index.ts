@@ -1,12 +1,13 @@
 import type {
   AuthResponse,
   GearRecommendation,
-  GeneratedRoute,
+  GenerateRoutesResponse,
   LoginRequest,
   OptimalWeatherWindow,
   RegisterRequest,
   User,
   UserHikeStats,
+  UserSettings,
 } from '@cleartrail/shared';
 import { api } from './client';
 
@@ -26,21 +27,48 @@ export function getMe() {
   return api.get<{ user: User }>('/auth/me');
 }
 
-export function getOptimalWindow(lat: number, lng: number) {
-  return api.get<OptimalWeatherWindow>(
-    `/weather/optimal-window?lat=${lat}&lng=${lng}`
-  );
+export function getUserSettings() {
+  return api.get<UserSettings>('/users/me/settings');
 }
 
-export function generateRoute(body: {
+export function updateUserSettings(settings: Partial<UserSettings>) {
+  return api.put<UserSettings>('/users/me/settings', settings);
+}
+
+export function getOptimalWindow(params: {
+  lat: number;
+  lng: number;
+  searchStartTime?: string;
+  searchEndTime?: string;
+  windowDurationMinutes?: number;
+}) {
+  const qs = new URLSearchParams({
+    lat: String(params.lat),
+    lng: String(params.lng),
+  });
+  if (params.searchStartTime) {
+    qs.set('searchStartTime', params.searchStartTime);
+  }
+  if (params.searchEndTime) {
+    qs.set('searchEndTime', params.searchEndTime);
+  }
+  if (params.windowDurationMinutes) {
+    qs.set('windowDurationMinutes', String(params.windowDurationMinutes));
+  }
+  return api.get<OptimalWeatherWindow>(`/weather/optimal-window?${qs}`);
+}
+
+export function generateRoutes(body: {
   lat: number;
   lng: number;
   durationMinutes: number;
   walkingSpeedKmh?: number;
+  loopRoutesOnly?: boolean;
   dryFeetEnabled?: boolean;
   shadePreferenceEnabled?: boolean;
+  count?: number;
 }) {
-  return api.post<GeneratedRoute>('/routes/generate', body);
+  return api.post<GenerateRoutesResponse>('/routes/generate', body);
 }
 
 export function getGearRecommendation(lat: number, lng: number) {

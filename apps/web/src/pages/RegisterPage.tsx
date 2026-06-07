@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { register as registerUser } from '../api';
 
 const schema = z.object({
@@ -15,6 +15,7 @@ type FormData = z.infer<typeof schema>;
 
 export function RegisterPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const {
     register,
     handleSubmit,
@@ -23,7 +24,11 @@ export function RegisterPage() {
 
   const mutation = useMutation({
     mutationFn: registerUser,
-    onSuccess: () => navigate('/dashboard'),
+    onSuccess: async (data) => {
+      queryClient.setQueryData(['auth', 'me'], data.user);
+      await queryClient.invalidateQueries({ queryKey: ['auth'] });
+      navigate('/dashboard');
+    },
   });
 
   return (

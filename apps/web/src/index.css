@@ -120,12 +120,39 @@ a:hover {
 
 .field input[type='email'],
 .field input[type='password'],
-.field input[type='text'] {
+.field input[type='text'],
+.field input[type='date'],
+.field input[type='time'],
+.field input[type='range'] {
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--color-surface-light);
   border-radius: 8px;
   background: var(--color-bg);
   color: var(--color-text);
+}
+
+.window-hint {
+  margin-top: -0.25rem;
+  margin-bottom: 1rem;
+}
+
+.window-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+@media (max-width: 560px) {
+  .window-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.checkbox-toggle {
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--color-surface-light);
+  border-radius: 10px;
+  background: rgba(149, 213, 178, 0.05);
 }
 
 .checkbox {
@@ -279,3 +306,214 @@ ul {
   color: var(--color-muted);
   font-size: 0.9rem;
 }
+
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.nav-welcome {
+  color: var(--color-accent);
+  font-size: 0.9rem;
+}
+
+.nav-logout {
+  background: none;
+  border: 1px solid var(--color-surface-light);
+  color: var(--color-text);
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.nav-logout:hover {
+  background: var(--color-surface-light);
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--color-surface-light);
+  color: var(--color-text);
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-surface-light);
+}
+
+.field select,
+.field input[type='datetime-local'] {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-surface-light);
+  border-radius: 8px;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.route-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.route-list-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.65rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+  margin-bottom: 0.35rem;
+}
+
+.route-list-item:hover {
+  border-color: var(--color-surface-light);
+}
+
+.route-list-item.selected {
+  border-color: var(--color-accent);
+  background: rgba(149, 213, 178, 0.08);
+}
+
+.route-color-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.route-list-label {
+  flex: 1;
+  font-size: 0.9rem;
+}
+
+.route-selected-badge {
+  font-size: 0.75rem;
+  color: var(--color-accent);
+}
+
+.selected-route-stats h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  color: var(--color-accent);
+}
+
+.direction-badge {
+  display: inline-block;
+  background: var(--color-surface-light);
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.settings-page {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.settings-card h1 {
+  margin-top: 0;
+}
+
+.settings-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.success-msg {
+  color: var(--color-accent);
+  font-size: 0.9rem;
+  margin-top: 0.75rem;
+}
+
+.settings-account {
+  margin-top: 1rem;
+}
+
+.user-location-marker {
+  background: transparent;
+  border: none;
+}
+
+.user-location-pulse {
+  position: relative;
+  width: 24px;
+  height: 24px;
+}
+
+.user-location-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  background: #2196f3;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(33, 150, 243, 0.8);
+  z-index: 2;
+}
+
+.user-location-pulse::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  background: rgba(33, 150, 243, 0.35);
+  border-radius: 50%;
+  animation: location-pulse 2s ease-out infinite;
+}
+
+@keyframes location-pulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+.trail-endpoint-marker {
+  background: transparent;
+  border: none;
+}
+
+.trail-marker-inner {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #fff;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.trail-start .trail-marker-inner {
+  background: #40916c;
+}
+
+.trail-end .trail-marker-inner {
+  background: #f77f00;
+}
+

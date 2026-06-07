@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { pool, pointFromLatLng } from '../db/pool.js';
 import { requireAuth } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
-import { generateCircularRoute } from '../services/routing.service.js';
+import { generateCircularRoute, generateMultipleRoutes } from '../services/routing.service.js';
 
 const router: RouterType = Router();
 
@@ -12,11 +12,23 @@ const generateSchema = z.object({
   lng: z.number().min(-180).max(180),
   durationMinutes: z.number().min(15).max(480),
   walkingSpeedKmh: z.number().min(2).max(8).optional(),
+  loopRoutesOnly: z.boolean().optional(),
   dryFeetEnabled: z.boolean().optional(),
   shadePreferenceEnabled: z.boolean().optional(),
+  count: z.number().min(1).max(5).optional(),
 });
 
 router.post('/generate', async (req, res, next) => {
+  try {
+    const body = generateSchema.parse(req.body);
+    const result = await generateMultipleRoutes(body);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/generate-single', async (req, res, next) => {
   try {
     const body = generateSchema.parse(req.body);
     const route = await generateCircularRoute(body);

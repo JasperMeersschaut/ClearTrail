@@ -1,6 +1,53 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
-  <rect width="512" height="512" rx="96" fill="#2d6a4f"/>
-  <path d="M128 360 L256 120 L384 360 Z" stroke="#95d5b2" stroke-width="24" fill="none" stroke-linejoin="round"/>
-  <circle cx="256" cy="200" r="32" fill="#d8f3dc"/>
-  <path d="M180 360 Q256 300 332 360" stroke="#40916c" stroke-width="16" fill="none"/>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Wandel web app logo</title>
+  <desc id="desc">Modern app icon with mountains, sun and a winding hiking trail.</desc>
+  <defs>
+    <linearGradient id="bg" x1="140" y1="76" x2="884" y2="948" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2F7D59"/>
+      <stop offset="0.52" stop-color="#14533D"/>
+      <stop offset="1" stop-color="#071F18"/>
+    </linearGradient>
+    <linearGradient id="mountain" x1="235" y1="332" x2="773" y2="815" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#EAF7E9"/>
+      <stop offset="1" stop-color="#9EE4B7"/>
+    </linearGradient>
+    <linearGradient id="frontMountain" x1="180" y1="488" x2="824" y2="840" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7CE0A7"/>
+      <stop offset="1" stop-color="#39B77F"/>
+    </linearGradient>
+    <linearGradient id="trail" x1="506" y1="463" x2="506" y2="871" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF7D6"/>
+      <stop offset="1" stop-color="#F3D98B"/>
+    </linearGradient>
+    <filter id="softShadow" x="70" y="90" width="884" height="884" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="24" stdDeviation="30" flood-color="#001A12" flood-opacity="0.26"/>
+    </filter>
+    <clipPath id="clip">
+      <rect x="56" y="56" width="912" height="912" rx="232"/>
+    </clipPath>
+  </defs>
+
+  <g filter="url(#softShadow)">
+    <rect x="56" y="56" width="912" height="912" rx="232" fill="url(#bg)"/>
+  </g>
+
+  <g clip-path="url(#clip)">
+    <circle cx="748" cy="273" r="86" fill="#FFE8A3"/>
+    <circle cx="748" cy="273" r="126" fill="#FFE8A3" opacity="0.14"/>
+
+    <path d="M127 783L370 392C397 349 461 350 486 394L591 574L674 455C700 418 755 421 777 461L912 783H127Z" fill="url(#mountain)"/>
+    <path d="M370 392L487 595L528 525L486 394C461 350 397 349 370 392Z" fill="#FFFFFF" opacity="0.42"/>
+    <path d="M674 455L738 564L777 461C755 421 700 418 674 455Z" fill="#FFFFFF" opacity="0.34"/>
+
+    <path d="M106 825L291 580C318 544 372 545 397 582L465 681L548 546C575 502 640 506 662 554L796 825H106Z" fill="url(#frontMountain)"/>
+    <path d="M291 580L420 770L465 681L397 582C372 545 318 544 291 580Z" fill="#D8F3DC" opacity="0.42"/>
+
+    <path d="M506 456C453 532 546 578 493 646C458 692 398 716 397 798C397 839 434 867 512 867C590 867 627 839 627 798C627 748 591 722 542 700" stroke="#073526" stroke-width="76" stroke-linecap="round" opacity="0.24"/>
+    <path d="M506 456C453 532 546 578 493 646C458 692 398 716 397 798C397 839 434 867 512 867C590 867 627 839 627 798C627 748 591 722 542 700" stroke="url(#trail)" stroke-width="48" stroke-linecap="round"/>
+    <path d="M506 456C453 532 546 578 493 646C458 692 398 716 397 798C397 839 434 867 512 867C590 867 627 839 627 798C627 748 591 722 542 700" stroke="#FFFDF0" stroke-width="10" stroke-linecap="round" opacity="0.75" stroke-dasharray="2 66"/>
+
+    <path d="M512 303C449 303 398 354 398 417C398 510 512 604 512 604C512 604 626 510 626 417C626 354 575 303 512 303Z" fill="#0B3024" opacity="0.20" transform="translate(10 14)"/>
+    <path d="M512 276C449 276 398 327 398 390C398 483 512 577 512 577C512 577 626 483 626 390C626 327 575 276 512 276Z" fill="#F8FFF6"/>
+    <circle cx="512" cy="392" r="43" fill="#1E6D4D"/>
+  </g>
 </svg>

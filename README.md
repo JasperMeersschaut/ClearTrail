@@ -90,7 +90,9 @@ pnpm dev
 | POST | `/api/v1/auth/register` | Create account |
 | POST | `/api/v1/auth/login` | Sign in (JWT cookie) |
 | GET | `/api/v1/weather/optimal-window` | Best hiking window (24–48h) |
-| POST | `/api/v1/routes/generate` | Generate circular route |
+| GET | `/api/v1/users/me/settings` | Display settings (distance/time/date format) |
+| PUT | `/api/v1/users/me/settings` | Update display settings |
+| POST | `/api/v1/routes/generate` | Generate 5 directional route alternatives |
 | GET | `/api/v1/gear/recommendation` | Clothing/gear advice |
 | GET | `/api/v1/users/me/stats` | Dashboard statistics |
 | POST | `/api/v1/hikes` | Log a completed hike |

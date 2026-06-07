@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import {
+  CircleMarker,
   MapContainer,
   Marker,
   Polyline,
@@ -7,23 +8,36 @@ import {
   useMap,
 } from 'react-leaflet';
 import L from 'leaflet';
-import type { Feature, LineString } from '@cleartrail/shared';
+import type { Feature, GeneratedRoute, LineString } from '@cleartrail/shared';
+import { ROUTE_COLORS } from '@cleartrail/shared';
 import 'leaflet/dist/leaflet.css';
 
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: new URL(
-    'leaflet/dist/images/marker-icon-2x.png',
-    import.meta.url
-  ).href,
-  iconUrl: new URL('leaflet/dist/images/marker-icon.png', import.meta.url)
-    .href,
-  shadowUrl: new URL('leaflet/dist/images/marker-shadow.png', import.meta.url)
-    .href,
+const userLocationIcon = L.divIcon({
+  className: 'user-location-marker',
+  html: '<div class="user-location-pulse"><div class="user-location-dot"></div></div>',
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+});
+
+const trailStartIcon = L.divIcon({
+  className: 'trail-endpoint-marker trail-start',
+  html: '<div class="trail-marker-inner">S</div>',
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+});
+
+const trailEndIcon = L.divIcon({
+  className: 'trail-endpoint-marker trail-end',
+  html: '<div class="trail-marker-inner">E</div>',
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
 });
 
 interface MapViewProps {
   center: { lat: number; lng: number };
-  route?: Feature<LineString> | null;
+  routes: GeneratedRoute[];
+  selectedRouteIndex: number;
+  onRouteSelect: (index: number) => void;
 }
 
 function MapCenterUpdater({ center }: { center: { lat: number; lng: number } }) {
@@ -36,14 +50,87 @@ function MapCenterUpdater({ center }: { center: { lat: number; lng: number } }) 
   return null;
 }
 
+function positionsClose(
+  a: [number, number],
+  b: [number, number],
+  tolerance = 0.0003
+): boolean {
+  return (
+    Math.abs(a[0] - b[0]) < tolerance && Math.abs(a[1] - b[1]) < tolerance
+  );
+}
+
 function geoJsonToLeafletPositions(
   route: Feature<LineString>
 ): [number, number][] {
   return route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
 }
 
-export function MapView({ center, route }: MapViewProps) {
-  const routePositions = route ? geoJsonToLeafletPositions(route) : [];
+function isLoopRoute(route: GeneratedRoute): boolean {
+  if (route.geojson.properties?.isLoop === true) return true;
+  if (route.geojson.properties?.isLoop === false) return false;
+  const positions = geoJsonToLeafletPositions(route.geojson);
+  if (positions.length < 2) return false;
+  return positionsClose(positions[0], positions[positions.length - 1]);
+}
+
+function RouteLayer({
+  route,
+  index,
+  isSelected,
+  onSelect,
+}: {
+  route: GeneratedRoute;
+  index: number;
+  isSelected: boolean;
+  onSelect: (index: number) => void;
+}) {
+  const positions = geoJsonToLeafletPositions(route.geojson);
+  const color = route.color ?? ROUTE_COLORS[index % ROUTE_COLORS.length];
+  const opacity = isSelected ? 1 : 0.3;
+  const weight = isSelected ? 5 : 3;
+
+  return (
+    <Polyline
+      positions={positions}
+      pathOptions={{
+        color,
+        weight,
+        opacity,
+        lineCap: 'round',
+        lineJoin: 'round',
+      }}
+      eventHandlers={{
+        click: () => onSelect(index),
+      }}
+    />
+  );
+}
+
+export function MapView({
+  center,
+  routes,
+  selectedRouteIndex,
+  onRouteSelect,
+}: MapViewProps) {
+  const selectedRoute = routes[selectedRouteIndex];
+  const selectedPositions = selectedRoute
+    ? geoJsonToLeafletPositions(selectedRoute.geojson)
+    : [];
+  const loopStart = selectedPositions[0];
+  const loopEnd = selectedPositions[selectedPositions.length - 1];
+  const selectedIsLoop = selectedRoute ? isLoopRoute(selectedRoute) : false;
+  const endDistinct =
+    loopStart &&
+    loopEnd &&
+    !positionsClose(loopStart, loopEnd);
+
+  const unselectedRoutes = routes
+    .map((route, index) => ({ route, index }))
+    .filter(({ index }) => index !== selectedRouteIndex);
+  const selectedRouteEntry = routes[selectedRouteIndex]
+    ? { route: routes[selectedRouteIndex], index: selectedRouteIndex }
+    : null;
 
   return (
     <MapContainer
@@ -57,18 +144,44 @@ export function MapView({ center, route }: MapViewProps) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <MapCenterUpdater center={center} />
-      <Marker position={[center.lat, center.lng]} />
-      {routePositions.length > 0 && (
-        <>
-          <Polyline
-            positions={routePositions}
-            pathOptions={{ color: '#1b4332', weight: 7, opacity: 0.6 }}
-          />
-          <Polyline
-            positions={routePositions}
-            pathOptions={{ color: '#40916c', weight: 4 }}
-          />
-        </>
+      <Marker position={[center.lat, center.lng]} icon={userLocationIcon} />
+
+      {unselectedRoutes.map(({ route, index }) => (
+        <RouteLayer
+          key={`route-${index}`}
+          route={route}
+          index={index}
+          isSelected={false}
+          onSelect={onRouteSelect}
+        />
+      ))}
+
+      {selectedRouteEntry && (
+        <RouteLayer
+          route={selectedRouteEntry.route}
+          index={selectedRouteEntry.index}
+          isSelected
+          onSelect={onRouteSelect}
+        />
+      )}
+
+      {loopStart && (
+        <Marker position={loopStart} icon={trailStartIcon} zIndexOffset={500} />
+      )}
+      {endDistinct && loopEnd && (
+        <Marker position={loopEnd} icon={trailEndIcon} zIndexOffset={500} />
+      )}
+      {selectedIsLoop && loopStart && (
+        <CircleMarker
+          center={loopStart}
+          radius={6}
+          pathOptions={{
+            color: '#40916c',
+            fillColor: '#40916c',
+            fillOpacity: 0.85,
+            weight: 2,
+          }}
+        />
       )}
     </MapContainer>
   );

@@ -30,6 +30,10 @@ router.post('/register', async (req, res, next) => {
       `INSERT INTO user_preferences (user_id) VALUES ($1)`,
       [user.id]
     );
+    await pool.query(
+      `INSERT INTO user_settings (user_id) VALUES ($1)`,
+      [user.id]
+    );
 
     const token = signToken({ userId: user.id, email: user.email });
     res.cookie('token', token, {

@@ -1,12 +1,15 @@
 import type { Feature, LineString } from './geo.js';
+import type { CardinalDirection } from './geo.js';
 
 export interface GenerateRouteRequest {
   lat: number;
   lng: number;
   durationMinutes: number;
   walkingSpeedKmh?: number;
+  loopRoutesOnly?: boolean;
   dryFeetEnabled?: boolean;
   shadePreferenceEnabled?: boolean;
+  count?: number;
 }
 
 export interface SurfaceBreakdown {
@@ -32,6 +35,15 @@ export interface GeneratedRoute {
   surfaceBreakdown: SurfaceBreakdown;
   scoringMetadata: ScoringMetadata;
   geojson: Feature<LineString>;
+  direction?: CardinalDirection;
+  bearing?: number;
+  routeIndex?: number;
+  color?: string;
+}
+
+export interface GenerateRoutesResponse {
+  routes: GeneratedRoute[];
+  selectedIndex: number;
 }
 
 export interface SavedRoute extends GeneratedRoute {
