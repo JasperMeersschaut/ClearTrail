@@ -8,11 +8,16 @@
     "dev:api": "pnpm --filter @cleartrail/api dev",
     "dev:web": "pnpm --filter @cleartrail/web dev",
     "build": "pnpm run -r build",
+    "preview": "pnpm --filter @cleartrail/web preview",
+    "start": "pnpm --filter @cleartrail/api start",
     "migrate": "pnpm --filter @cleartrail/api migrate",
-    "typecheck": "pnpm run -r typecheck"
+    "typecheck": "pnpm run -r typecheck",
+    "lint": "pnpm run -r lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "engines": {
-    "node": "22.x",
+    "node": "24.x",
     "pnpm": ">=9.0.0"
   },
   "packageManager": "pnpm@10.30.3+sha512.c961d1e0a2d8e354ecaa5166b822516668b7f44cb5bd95122d590dd81922f606f5473b6d23ec4a5be05e7fcd18e8488d47d978bbe981872f1145d06e9a740017",
